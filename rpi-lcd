@@ -1,0 +1,222 @@
+#!/bin/bash
+if [ -z "$1" ]; then
+    echo -e "\033[31m[Error]\033[0m"
+    echo "please choose tft"
+    exit 1
+fi
+if [ -z "$2" ]; then
+    echo -e "\033[31m[Error]\033[0m"
+    echo "please choose Function"
+    exit 1
+fi
+
+
+set -e
+Board_model=$(cat "/proc/device-tree/model")
+
+PATH_PWD="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
+PATH_CONF="${PATH_PWD}/conf"
+PATH_TFT="${PATH_PWD}/tft"
+PATH_DTB="${PATH_PWD}/dtb"
+
+
+TFT_NAME=$1
+OPT_TFT_SETTING="${PATH_TFT}/${TFT_NAME}"
+source $OPT_TFT_SETTING
+
+_file_insert() {
+    if ! grep -q "^$2" "$1"; then
+        echo "$2" >> "$1"
+    fi
+}
+_file_delete() {
+    if grep -q "^$2" "$1"; then
+        sed -i "/$2/d" $1
+    fi
+}
+
+# 判断config.txt里有没有以参数1开头的行
+# 如果有则把后续部分替换为参数2
+# 如果没有则插入一行以参数1和2拼接的字符串，
+_config_insert() {
+    local key="$1"
+    local value="$2"
+    local file="/boot/config.txt"
+    if grep -q "^$key" "$file"; then
+        sudo sed -i "/^$key/c\\$key$value" "$file"
+    else
+        echo "$key$value" | sudo tee -a "$file"
+    fi
+}
+
+_enable_modules() {
+    modules_file="/etc/modules"
+    _file_insert $modules_file ${module_touch}
+}
+_disable_modules() {
+    modules_file="/etc/modules"
+    _file_delete $modules_file ${module_touch}
+}
+
+_enable_dtbo() {
+    config_file="/boot/config.txt"
+    
+    dt_str="dtoverlay=${dtb_name}"
+    _file_insert $config_file $dt_str
+    
+}
+_disable_dtbo() {
+    config_file="/boot/config.txt"
+    
+    dt_str="dtoverlay=${dtb_name}"
+    _file_delete $config_file $dt_str
+    
+}
+
+# 更新设备树文件
+_updoad_dtbo() {
+    _enable_modules
+    
+    dts_files=$(find "$PATH_DTB" -type f -name "*${dtb_name}.dts")
+    for dts_file in $dts_files; do
+        dtbo_file="${dts_file%.dts}.dtbo"
+        dtc -@  -I dts -O dtb -o "$dtbo_file" "$dts_file"
+    done
+    
+    overlays_folder="/boot/overlays"
+    dtb_files=$(find "$PATH_DTB" -type f -name "*${dtb_name}.dtbo")
+    for file in $dtb_files; do
+        cp "$file" "$overlays_folder"
+    done
+    
+}
+
+_dtb_replace() {
+    local name=$1
+    local value=$2
+    
+    local searchString="$name = <[0-9]*>"
+    local replaceString="$name = <$value>"
+    
+    dts_files=$(find "$PATH_DTB" -type f -name "*${dtb_name}.dts")
+    for dts_file in $dts_files; do
+        dtbo_file="${dts_file%.dts}.dtbo"
+        sed -i "s/$searchString/$replaceString/g" $dts_file
+        dtc -@  -I dts -O dtb -o "$dtbo_file" "$dts_file"
+    done
+}
+
+
+_update_fbcp() {
+    make -C  $PATH_PWD/fbcp clean
+    make -C  $PATH_PWD/fbcp $LCD_CHIP
+    systemctl stop fbcp.service
+    cp $PATH_PWD/fbcp/$LCD_CHIP /usr/local/bin/fbcp
+}
+set_rotate_switch="0 90 180 270"
+set_rotate() {
+    OPT_operate=$1
+    
+    if [[ ! $set_rotate_switch =~ (^|[[:space:]])$OPT_operate($|[[:space:]]) ]]; then
+        echo -e "\033[31m[Error]\033[0m"
+        echo "error angle"
+        exit 1
+    fi
+    
+    # _dtb_replace "rotate" $OPT_operate
+    cp -rf "${PATH_CONF}/calibration.conf-${TFT_NAME}-${OPT_operate}"  /etc/X11/xorg.conf.d/99-calibration.conf
+    
+    
+    case "$1" in
+        0|180)
+            _config_insert "hdmi_cvt" " $TFT_WIDTH $TFT_HIGHT 60 6 0 0 0"
+        ;;
+        90|270)
+            _config_insert "hdmi_cvt" " $TFT_HIGHT $TFT_WIDTH 60 6 0 0 0"
+        ;;
+    esac
+    # _updoad_dtbo
+    
+    _file_insert $PATH_PWD/fbcp/common.h "#define LCD_ROTATIONS"
+    
+    # 替换fbcp程序中的一个宏定义
+    file="$PATH_PWD/fbcp/common.h"
+    sed -i "/^#define LCD_ROTATIONS/c\#define LCD_ROTATIONS $1" $file
+    _update_fbcp
+}
+
+# -h() {
+#     echo -e "${help_str}"
+# }
+
+
+
+_remove_desktop() {
+    
+    config_file="/boot/config.txt"
+    
+    _file_delete $config_file "hdmi_force_hotplug=1"
+    _file_delete $config_file "hdmi_mode=87"
+    _file_delete $config_file "hdmi_group=2"
+    _file_delete $config_file "hdmi_drive=2"
+    _file_delete $config_file "hdmi_cvt $TFT_WIDTH $TFT_HIGHT 60 6 0 0 0"
+    _file_delete $config_file "hdmi_cvt $TFT_HIGHT $TFT_WIDTH 60 6 0 0 0"
+    _file_insert $config_file "dtoverlay=vc4-kms-v3d"
+    
+    target_file="/usr/share/X11/xorg.conf.d/45-evdev.conf"
+    if [ -f "$target_file" ]; then
+        rm -rf  $target_file
+    fi
+}
+
+
+
+install() {
+    _updoad_dtbo
+    _enable_dtbo
+    
+    _update_fbcp
+    
+    target_path="/usr/share/X11/xorg.conf.d/"
+    
+    
+    config_file="/boot/config.txt"
+    _config_insert "hdmi_force_hotplug" "=1"
+    _config_insert "hdmi_group" "=2"
+    _config_insert "hdmi_mode" "=87"
+    _config_insert "hdmi_cvt" " $TFT_HIGHT $TFT_WIDTH 60 6 0 0 0"
+    _config_insert "hdmi_drive" "=2"
+    _file_delete $config_file "dtoverlay=vc4-kms-v3d"
+    
+    
+    systemctl enable fbcp.service
+    
+    
+    if [ -d "$target_path" ]; then
+        cp ${PATH_CONF}/10-evdev.conf $target_path/45-evdev.conf
+    fi
+    # cp -rf /usr/share/X11/xorg.conf.d/10-evdev.conf /usr/share/X11/xorg.conf.d/45-evdev.conf
+    
+    set_rotate 270
+    
+    
+}
+
+remove() {
+    _disable_modules
+    _disable_dtbo
+    _remove_desktop
+    systemctl disable fbcp.service
+    
+}
+
+
+FUNCTION_NAME=$2
+ARGUMENT=$3
+$FUNCTION_NAME $ARGUMENT
+
+if [[ $? -ne 0 ]]; then
+    exit 1
+fi
+echo -e "\033[32m[ok]\033[0m"
+echo -e "\n\tplease reboot\n"

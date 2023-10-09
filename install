@@ -1,0 +1,59 @@
+#!/bin/bash
+
+set -e
+
+echo_red() {
+    echo -e "\r\033[31m$1\033[0m"
+}
+echo_green() {
+    echo -e "\r\033[32m$1\033[0m"
+}
+echo_blue() {
+    echo -e "\r\033[36m$1\033[0m"
+}
+
+
+PATH_PWD="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
+VERSION=$(uname -r)
+VERSION_digit=${VERSION:0:1}
+
+
+
+
+sudo apt-get update
+sudo apt-get install xserver-xorg-input-evdev libraspberrypi-dev -y
+
+
+echo_blue "Start to compile the code"
+make -C $PATH_PWD/fbcp/
+echo_green "[OK]\t codes are ready"
+
+# echo_blue "Start to install the rpi-lcd command"
+
+chmod +x $PATH_PWD/rpi-lcd
+bin_path="/usr/bin/rpi-lcd"
+if [ ! -e "${bin_path}" ]; then
+    ln -s ${PATH_PWD}/rpi-lcd ${bin_path}
+fi
+if [[ ! -d /etc/bash_completion.d/ ]]; then
+    mkdir /etc/bash_completion.d/
+fi
+cp ${PATH_PWD}/completion.sh  /etc/bash_completion.d/rpi-lcd
+
+
+bash_str="source /etc/bash_completion.d/rpi-lcd"
+if ! grep -q  ${bash_str}  /etc/bash.bashrc; then
+    echo ${bash_str} >> /etc/bash.bashrc
+fi
+
+cp $PATH_PWD/fbcp/fbcp.service /lib/systemd/system/
+
+
+
+# echo_green "[OK]\t rpi-lcd is ready"
+
+echo_green "\n\nplease run this command :"
+echo_green "\n\t source /etc/bash_completion.d/rpi-lcd \n\n"
+
+
+# echo -e "\033[32m[ok]\033[0m"
