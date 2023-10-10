@@ -42,5 +42,5 @@ sudo rpi-lcd lcd35-st7796 set_rotate 90
 ## 移除lcd
 禁用相关驱动，恢复桌面的各项设置。重启后生效
 ```
-rpi-lcd lcd35-st7796 remove
+sudo rpi-lcd lcd35-st7796 remove
 ```
