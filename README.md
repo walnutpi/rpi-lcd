@@ -21,7 +21,7 @@ source /etc/bash_completion.d/rpi-lcd
 
 # 使用
 ```
-rpi-lcd [lcd-name] [function] [value]
+sudo rpi-lcd [lcd-name] [function] [value]
 ```
 支持自动补全，按两下tab键就知道当前位置有哪些可选项
 - `[lcd-name]` 选择你的lcd屏
@@ -30,13 +30,13 @@ rpi-lcd [lcd-name] [function] [value]
 
 ## 启用lcd屏，并配置与hdmi同屏
 ```
-rpi-lcd lcd35-st7796 install
+sudo rpi-lcd lcd35-st7796 install
 ```
 
 ## 旋转lcd方向
 对lcd的方向进行旋转。重启后生效
 ```
-rpi-lcd lcd35-st7796 set_rotate 90
+sudo rpi-lcd lcd35-st7796 set_rotate 90
 ```
 
 ## 移除lcd
