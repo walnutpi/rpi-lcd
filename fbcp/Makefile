@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS =  
+CFLAGS =  -Wall
 
 OBJS = hw_spi.o  wiringPi.o  st7796.o common.h
 

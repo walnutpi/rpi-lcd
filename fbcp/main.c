@@ -9,15 +9,14 @@
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
-#include <wiringPi.h>
 #include <time.h>
 #include <linux/fb.h>
 
 #include "common.h"
 
-// #ifdef DEF_ST7796
+#ifdef DEF_ST7796
 #include "st7796.h"
-// #endif
+#endif
 
 int main()
 {
@@ -64,36 +63,35 @@ int main()
            vinfo.blue.offset, vinfo.blue.length);
 
     fb0 = (uint32_t *)mmap(0, finfo.smem_len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    if ((int)fb0 == -1)
-    {
-        printf("Error: failed to map framebuffer device to memory./n");
-        exit(4);
-    }
 
     uint16_t *buf = malloc(width * height * 2);
-    uint16_t tmp16;
     uint32_t tmp32;
     uint8_t r;
     uint8_t g;
     uint8_t b;
 
-    while (1)
+    switch (bpp)
     {
-        for (int i = 0; i < width * height; i++)
+    case 32:
+        while (1)
         {
-            tmp32 = fb0[i];
-            b = (tmp32 & 0xff);
-            g = (tmp32 & 0xff00) >> 8;
-            r = (tmp32 & 0xff0000) >> 16;
+            for (int i = 0; i < width * height; i++)
+            {
+                tmp32 = fb0[i];
+                b = (tmp32 & 0xff);
+                g = (tmp32 & 0xff00) >> 8;
+                r = (tmp32 & 0xff0000) >> 16;
 
-            r /= 0xff / 0x1f;
-            g /= 0xff / 0x3f;
-            b /= 0xff / 0x1f;
+                r /= 0xff / 0x1f;
+                g /= 0xff / 0x3f;
+                b /= 0xff / 0x1f;
 
-            buf[i] = (r << 3) + (b << 8) + ((g & 0x7) << 13) + ((g & 0x38) >> 3);
-
+                buf[i] = (r << 3) + (b << 8) + ((g & 0x7) << 13) + ((g & 0x38) >> 3);
+            }
+            LCD_draw_buff((uint8_t *)buf, width * height * 2);
         }
-        LCD_draw_buff((uint8_t *)buf, width * height * 2);
+        default:
+        printf("\n\tFailed no support you hdmi format\r\n");
     }
     return 0;
 }

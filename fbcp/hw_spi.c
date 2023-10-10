@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <linux/spi/spidev.h>
-#include <wiringPi.h>
+#include "wiringPi.h"
 #include "common.h"
 #include "hw_spi.h"
 
@@ -49,7 +49,7 @@ void spi_init()
     LCD_Reset();
 }
 // mosi跟miso同时工作，从tx_buf中取出数据发送的同时，也会读取数据存入rx_buf
-int spi_transfer(char *tx_buf, char *rx_buf, int len)
+int spi_transfer(uint8_t *tx_buf, uint8_t *rx_buf, int len)
 {
     struct spi_ioc_transfer transfer;
     transfer.tx_buf = (unsigned long)tx_buf;
@@ -91,7 +91,6 @@ void SPI_WriteReg(uint8_t LCD_Reg, uint8_t LCD_RegValue)
 
 void SPI_WRITE_BUF_DATA(uint8_t *buf, int len)
 {
-    int tmp;
     digitalWrite(PIN_DC, HIGH);
 
     while (len > 1000)

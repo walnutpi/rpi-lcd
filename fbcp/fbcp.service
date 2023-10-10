@@ -1,12 +1,15 @@
 [Unit]
 Description=Copy the fb
-After=graphical.target
+After=sysinit.target
 
 [Service]
-Type=oneshot
+Type=simple
 ExecStart=/usr/local/bin/fbcp
 RemainAfterExit=yes
 StandardOutput=null
+Restart=always
+RestartSec=2
+StartLimitInterval=0
 
 [Install]
-WantedBy=graphical.target
+WantedBy=basic.target

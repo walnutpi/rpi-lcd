@@ -149,7 +149,7 @@ void _LCD_SEND_DATA(uint16_t Color, int num)
 
     // 颠倒字节序
     uint16_t buf2[LCD_W * LCD_H];
-    uint8_t *b1, b2;
+    // uint8_t *b1, b2;
     uint8_t *s;
     uint8_t *d;
     for (int i = 0; i < num; i++)

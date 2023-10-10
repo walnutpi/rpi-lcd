@@ -307,7 +307,7 @@ static uint64_t epochMilli, epochMicro ;
 
 static int wiringPiMode = WPI_MODE_UNINITIALISED ;
 static volatile int    pinPass = -1 ;
-static pthread_mutex_t pinMutex ;
+// static pthread_mutex_t pinMutex ;
 
 // Debugging & Return codes
 
@@ -331,7 +331,7 @@ static int sysFds [64] =
 
 // ISR Data
 
-static void (*isrFunctions [64])(void) ;
+// static void (*isrFunctions [64])(void) ;
 
 
 // Doing it the Arduino way with lookup tables...
@@ -568,17 +568,17 @@ static uint8_t gpioToPUDCLK [] =
 // gpioToPwmALT
 //	the ALT value to put a GPIO pin into PWM mode
 
-static uint8_t gpioToPwmALT [] =
-{
-          0,         0,         0,         0,         0,         0,         0,         0,	//  0 ->  7
-          0,         0,         0,         0, FSEL_ALT0, FSEL_ALT0,         0,         0, 	//  8 -> 15
-          0,         0, FSEL_ALT5, FSEL_ALT5,         0,         0,         0,         0, 	// 16 -> 23
-          0,         0,         0,         0,         0,         0,         0,         0,	// 24 -> 31
-          0,         0,         0,         0,         0,         0,         0,         0,	// 32 -> 39
-  FSEL_ALT0, FSEL_ALT0,         0,         0,         0, FSEL_ALT0,         0,         0,	// 40 -> 47
-          0,         0,         0,         0,         0,         0,         0,         0,	// 48 -> 55
-          0,         0,         0,         0,         0,         0,         0,         0,	// 56 -> 63
-} ;
+// static uint8_t gpioToPwmALT [] =
+// {
+//           0,         0,         0,         0,         0,         0,         0,         0,	//  0 ->  7
+//           0,         0,         0,         0, FSEL_ALT0, FSEL_ALT0,         0,         0, 	//  8 -> 15
+//           0,         0, FSEL_ALT5, FSEL_ALT5,         0,         0,         0,         0, 	// 16 -> 23
+//           0,         0,         0,         0,         0,         0,         0,         0,	// 24 -> 31
+//           0,         0,         0,         0,         0,         0,         0,         0,	// 32 -> 39
+//   FSEL_ALT0, FSEL_ALT0,         0,         0,         0, FSEL_ALT0,         0,         0,	// 40 -> 47
+//           0,         0,         0,         0,         0,         0,         0,         0,	// 48 -> 55
+//           0,         0,         0,         0,         0,         0,         0,         0,	// 56 -> 63
+// } ;
 
 
 // gpioToPwmPort
@@ -607,17 +607,17 @@ static uint8_t gpioToPwmPort [] =
 
 // gpioToGpClkALT0:
 
-static uint8_t gpioToGpClkALT0 [] =
-{
-          0,         0,         0,         0, FSEL_ALT0, FSEL_ALT0, FSEL_ALT0,         0,	//  0 ->  7
-          0,         0,         0,         0,         0,         0,         0,         0, 	//  8 -> 15
-          0,         0,         0,         0, FSEL_ALT5, FSEL_ALT5,         0,         0, 	// 16 -> 23
-          0,         0,         0,         0,         0,         0,         0,         0,	// 24 -> 31
-  FSEL_ALT0,         0, FSEL_ALT0,         0,         0,         0,         0,         0,	// 32 -> 39
-          0,         0, FSEL_ALT0, FSEL_ALT0, FSEL_ALT0,         0,         0,         0,	// 40 -> 47
-          0,         0,         0,         0,         0,         0,         0,         0,	// 48 -> 55
-          0,         0,         0,         0,         0,         0,         0,         0,	// 56 -> 63
-} ;
+// static uint8_t gpioToGpClkALT0 [] =
+// {
+//           0,         0,         0,         0, FSEL_ALT0, FSEL_ALT0, FSEL_ALT0,         0,	//  0 ->  7
+//           0,         0,         0,         0,         0,         0,         0,         0, 	//  8 -> 15
+//           0,         0,         0,         0, FSEL_ALT5, FSEL_ALT5,         0,         0, 	// 16 -> 23
+//           0,         0,         0,         0,         0,         0,         0,         0,	// 24 -> 31
+//   FSEL_ALT0,         0, FSEL_ALT0,         0,         0,         0,         0,         0,	// 32 -> 39
+//           0,         0, FSEL_ALT0, FSEL_ALT0, FSEL_ALT0,         0,         0,         0,	// 40 -> 47
+//           0,         0,         0,         0,         0,         0,         0,         0,	// 48 -> 55
+//           0,         0,         0,         0,         0,         0,         0,         0,	// 56 -> 63
+// } ;
 
 // gpioToClk:
 //	(word) Offsets to the clock Control and Divisor register
@@ -1432,9 +1432,10 @@ void pinModeAlt (int pin, int mode)
 
 void pinMode (int pin, int mode)
 {
-  int    fSel, shift, alt ;
+  int    fSel, shift ;
+  // int    fSel, shift, alt ;
   struct wiringPiNodeStruct *node = wiringPiNodes ;
-  int origPin = pin ;
+  // int origPin = pin ;
 
   setupCheck ("pinMode") ;
 
