@@ -1,5 +1,6 @@
 # rpi-lcd
-适用于在树莓派上使用lcd屏幕
+在树莓派上使用核桃派LCD屏幕。
+![rpi_3_5lcd](rpi_3_5lcd.png)
 
 # 安装
 1. clone
@@ -29,6 +30,7 @@ sudo rpi-lcd [lcd-name] [function] [value]
 - `[value]` 有些功能需要再附带一些输入参数
 
 ## 启用lcd屏，并配置与hdmi同屏
+重启后生效。
 ```
 sudo rpi-lcd lcd35-st7796 install
 ```
