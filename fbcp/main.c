@@ -18,11 +18,23 @@
 #include "st7796.h"
 #endif
 
+uint16_t swap_uint16(uint16_t *num)
+{
+    uint16_t value;
+    struct byte2
+    {
+        uint8_t b1;
+        uint8_t b2;
+    } *pbyte2;
+    pbyte2 = (struct byte2 *)num;
+    value = pbyte2->b2 + (pbyte2->b1 << 8);
+    return value;
+}
+
 int main()
 {
 
     int fd = 0;
-    uint32_t *fb0 = 0;
     struct fb_var_screeninfo vinfo;
     struct fb_fix_screeninfo finfo;
     int bpp;
@@ -62,22 +74,23 @@ int main()
            vinfo.green.offset, vinfo.green.length,
            vinfo.blue.offset, vinfo.blue.length);
 
-    fb0 = (uint32_t *)mmap(0, finfo.smem_len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-
     uint16_t *buf = malloc(width * height * 2);
-    uint32_t tmp32;
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
 
     switch (bpp)
     {
     case 32:
+        uint32_t tmp32;
+        uint8_t r;
+        uint8_t g;
+        uint8_t b;
+        uint32_t *fb0_u32;
+        fb0_u32 = (uint32_t *)mmap(0, finfo.smem_len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+
         while (1)
         {
             for (int i = 0; i < width * height; i++)
             {
-                tmp32 = fb0[i];
+                tmp32 = fb0_u32[i];
                 b = (tmp32 & 0xff);
                 g = (tmp32 & 0xff00) >> 8;
                 r = (tmp32 & 0xff0000) >> 16;
@@ -90,7 +103,21 @@ int main()
             }
             LCD_draw_buff((uint8_t *)buf, width * height * 2);
         }
-        default:
+    case 16:
+        uint16_t *fb0_u16;
+        fb0_u16 = (uint16_t *)mmap(0, finfo.smem_len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+
+        while (1)
+        {
+            for (int i = 0; i < width * height; i++)
+            {
+                // buf[i] = fb0_u16 + i;
+                buf[i] = swap_uint16(fb0_u16 + i);
+            }
+            LCD_draw_buff((uint8_t *)buf, width * height * 2);
+        }
+
+    default:
         printf("\n\tFailed no support you hdmi format\r\n");
     }
     return 0;
