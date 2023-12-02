@@ -76,14 +76,17 @@ int main()
 
     uint16_t *buf = malloc(width * height * 2);
 
+    uint32_t tmp32;
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+    uint32_t *fb0_u32;
+    uint16_t *fb0_u16;
+
     switch (bpp)
     {
     case 32:
-        uint32_t tmp32;
-        uint8_t r;
-        uint8_t g;
-        uint8_t b;
-        uint32_t *fb0_u32;
+
         fb0_u32 = (uint32_t *)mmap(0, finfo.smem_len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
         while (1)
@@ -104,7 +107,6 @@ int main()
             LCD_draw_buff((uint8_t *)buf, width * height * 2);
         }
     case 16:
-        uint16_t *fb0_u16;
         fb0_u16 = (uint16_t *)mmap(0, finfo.smem_len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
         while (1)
